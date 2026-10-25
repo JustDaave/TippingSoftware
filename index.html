@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QuietTip – Low-Fidelity Prototype</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <p class="banner" role="note">
+    Prototype for demonstration only. No real payments. All data is simulated and resets on refresh.
+  </p>
+
+  <main id="main">
+
+    <!-- Screen 1: Prototype start -->
+    <section id="screen-start" class="screen" aria-labelledby="start-heading">
+      <h1 id="start-heading" tabindex="-1">QuietTip prototype</h1>
+      <p>QuietTip is a private, optional digital tip jar that a customer opens from a receipt after checkout.</p>
+      <p>This is a demonstration. No real payments are made and no personal or payment information is requested.</p>
+      <p>Choose which part of the prototype to view. These are prototype navigation choices, not login roles.</p>
+      <div class="button-row">
+        <button type="button" data-action="start-customer">Customer experience</button>
+        <button type="button" data-action="go-employee">Employee transparency demo</button>
+      </div>
+    </section>
+
+    <!-- Screen 2: Completed purchase and receipt -->
+    <section id="screen-receipt" class="screen" aria-labelledby="receipt-heading" hidden>
+      <h1 id="receipt-heading" tabindex="-1">Purchase complete.</h1>
+      <p>Your $20.00 payment is complete. Nothing else is required.</p>
+
+      <div class="receipt" role="group" aria-label="Sample receipt">
+        <h2>Sample Café (fictional)</h2>
+        <p class="small">Counter service · Sample receipt</p>
+        <table>
+          <caption class="visually-hidden">Order items</caption>
+          <thead>
+            <tr><th scope="col">Item</th><th scope="col" class="num">Price</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Coffee</td><td class="num">$4.50</td></tr>
+            <tr><td>Sandwich</td><td class="num">$11.00</td></tr>
+            <tr><td>Muffin</td><td class="num">$3.00</td></tr>
+            <tr><td>Subtotal</td><td class="num">$18.50</td></tr>
+            <tr><td>Tax</td><td class="num">$1.50</td></tr>
+          </tbody>
+          <tfoot>
+            <tr><th scope="row">Order total</th><td class="num"><strong>$20.00</strong></td></tr>
+          </tfoot>
+        </table>
+        <p class="small">Payment status: Paid (simulated)</p>
+      </div>
+
+      <div class="qr-row">
+        <div class="placeholder qr" role="img" aria-label="QR code placeholder — not scannable">
+          QR code placeholder — not scannable
+        </div>
+        <div class="qr-text">
+          <button type="button" data-action="open-tip">Open optional tip page</button>
+          <p>In a real product, scanning the receipt would open this page on your phone.</p>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button type="button" data-action="finish-from-receipt">Finish</button>
+      </div>
+    </section>
+
+    <!-- Screen 3: Optional tip page -->
+    <section id="screen-tip" class="screen" aria-labelledby="tip-heading" hidden>
+      <h1 id="tip-heading" tabindex="-1">Optional tip</h1>
+      <p><strong>Sample Café (fictional)</strong><br>Purchase amount: $20.00 (paid)</p>
+      <p>Tipping is optional. Your purchase is already complete.</p>
+
+      <form id="tip-form" novalidate>
+        <fieldset>
+          <legend>Tip amount</legend>
+          <div class="options">
+            <label class="option"><input type="radio" name="tip" value="none"> <span>No tip</span></label>
+            <label class="option"><input type="radio" name="tip" value="1"> <span>$1</span></label>
+            <label class="option"><input type="radio" name="tip" value="2"> <span>$2</span></label>
+            <label class="option"><input type="radio" name="tip" value="3"> <span>$3</span></label>
+            <label class="option"><input type="radio" name="tip" value="custom"> <span>Custom</span></label>
+          </div>
+        </fieldset>
+
+        <div id="custom-wrap" class="custom-wrap" hidden>
+          <label for="custom-amount">Custom tip amount (US dollars)</label>
+          <div class="dollar-field">
+            <span aria-hidden="true">$</span>
+            <input id="custom-amount" type="text" inputmode="decimal" autocomplete="off"
+                   aria-describedby="custom-hint custom-error">
+          </div>
+          <p id="custom-hint" class="small">Enter an amount greater than $0, for example 2.50.</p>
+          <p id="custom-error" class="error" role="alert" hidden></p>
+        </div>
+
+        <p id="tip-error" class="error" role="alert" hidden></p>
+        <p class="small">Selecting an option does not send a tip. You will review it first.</p>
+        <div class="button-row">
+          <button type="submit">Continue</button>
+        </div>
+      </form>
+
+      <div class="button-row">
+        <button type="button" data-action="go-distribution">Where tips go</button>
+        <button type="button" data-action="feedback-no-tip">Leave feedback without tipping</button>
+        <button type="button" data-action="finish-no-tip">Finish without tipping</button>
+      </div>
+    </section>
+
+    <!-- Screen 4: Tip distribution -->
+    <section id="screen-distribution" class="screen" aria-labelledby="dist-heading" hidden>
+      <h1 id="dist-heading" tabindex="-1">Where tips go</h1>
+      <p class="tag">Sample policy (fictional)</p>
+      <blockquote>
+        All tips go to the employee pool. For this demonstration, pooled tips are divided equally
+        among four employees who worked this shift. The business keeps none.
+      </blockquote>
+
+      <div class="diagram" role="img"
+           aria-label="Diagram: all tips go into one employee pool, which is divided into four equal shares, one per employee. The business share is none.">
+        <div class="box">Employee tip pool<br>(all tips)</div>
+        <p class="diagram-step" aria-hidden="true">↓ divided equally ↓</p>
+        <div class="shares">
+          <div class="box">Employee 1<br>1/4 share</div>
+          <div class="box">Employee 2<br>1/4 share</div>
+          <div class="box">Employee 3<br>1/4 share</div>
+          <div class="box">Employee 4<br>1/4 share</div>
+        </div>
+        <div class="box box-dashed">Business share: none</div>
+      </div>
+
+      <p>This is a sample policy written for this prototype. It is not a claim about how any real business handles tips.</p>
+      <div class="button-row">
+        <button type="button" data-action="return-to-tip">Return to tip page</button>
+      </div>
+    </section>
+
+    <!-- Screen 5: Review tip -->
+    <section id="screen-review" class="screen" aria-labelledby="review-heading" hidden>
+      <h1 id="review-heading" tabindex="-1">Review tip</h1>
+      <p class="tag">Demo only. No money will be charged.</p>
+
+      <dl class="summary">
+        <dt>Purchase amount (already paid)</dt>
+        <dd>$20.00</dd>
+        <dt>Tip (separate simulated payment)</dt>
+        <dd id="review-tip">$0.00</dd>
+        <dt>Combined total</dt>
+        <dd id="review-total">$20.00</dd>
+      </dl>
+      <p>The tip is not added to your completed purchase. It would be a separate payment. This demo does not ask for any payment method.</p>
+
+      <div class="button-row">
+        <button type="button" data-action="edit-amount">Edit amount</button>
+        <button type="button" id="confirm-btn" data-action="confirm-tip">Confirm simulated tip</button>
+        <button type="button" data-action="cancel-tip">Cancel tip</button>
+      </div>
+    </section>
+
+    <!-- Screen 6: Completion -->
+    <section id="screen-complete" class="screen" aria-labelledby="complete-heading" hidden>
+      <h1 id="complete-heading" tabindex="-1">Visit complete</h1>
+      <p id="complete-summary">Your purchase is complete. No tip was added.</p>
+      <p>You can leave now. Feedback below is optional.</p>
+
+      <form id="feedback-form" class="panel" novalidate aria-labelledby="fb-heading">
+        <h2 id="fb-heading">Optional feedback</h2>
+        <p>Feedback is separate from tipping.</p>
+        <p id="fb-warning" class="tag">Do not include personal information. Demo feedback is kept only until refresh.</p>
+
+        <label for="fb-worked">What worked well? (optional)</label>
+        <textarea id="fb-worked" rows="3" maxlength="500" aria-describedby="fb-warning"></textarea>
+
+        <label for="fb-improve">What could be improved? (optional)</label>
+        <textarea id="fb-improve" rows="3" maxlength="500" aria-describedby="fb-warning"></textarea>
+
+        <p id="fb-error" class="error" role="alert" hidden></p>
+        <div class="button-row">
+          <button type="submit">Submit feedback (simulated)</button>
+        </div>
+        <p id="fb-confirm" class="confirm" role="status"></p>
+      </form>
+
+      <div class="button-row">
+        <button type="button" data-action="go-start">Return to prototype start</button>
+      </div>
+    </section>
+
+    <!-- Screen 7: Employee transparency demo -->
+    <section id="screen-employee" class="screen" aria-labelledby="emp-heading" hidden>
+      <h1 id="emp-heading" tabindex="-1">Employee transparency demo</h1>
+      <p class="tag">All figures are fictional demonstration data.</p>
+      <p>No login. This view shows aggregate totals for one sample shift.</p>
+
+      <dl class="summary">
+        <dt>Pooled tips this shift (fictional)</dt>
+        <dd id="emp-pool">$40.00</dd>
+        <dt>Employees sharing the pool</dt>
+        <dd>4</dd>
+        <dt>Equal share per employee (fictional)</dt>
+        <dd id="emp-share">$10.00</dd>
+      </dl>
+
+      <div class="shares" role="group" aria-label="Equal shares per employee">
+        <div class="box">Employee 1<br><span class="emp-box-share">$10.00</span></div>
+        <div class="box">Employee 2<br><span class="emp-box-share">$10.00</span></div>
+        <div class="box">Employee 3<br><span class="emp-box-share">$10.00</span></div>
+        <div class="box">Employee 4<br><span class="emp-box-share">$10.00</span></div>
+      </div>
+
+      <p>The pool starts at $40.00 of fictional tips. Simulated tips confirmed in the customer experience are added until the page is refreshed. Shares are rounded to the nearest cent for display.</p>
+      <p>Aggregate totals illustrate the concept only. They do not guarantee customer anonymity.</p>
+      <p>This demo does not claim that tips replace wages or guarantee higher earnings.</p>
+
+      <div class="button-row">
+        <button type="button" data-action="go-start">Return to prototype start</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

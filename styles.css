@@ -1,0 +1,361 @@
+/* QuietTip low-fidelity prototype: grayscale, system fonts, simple borders. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #111;
+  background: #fff;
+}
+
+.banner {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-bottom: 2px solid #333;
+  background: #e6e6e6;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0.5rem 0 1rem;
+}
+
+h2 {
+  font-size: 1.2rem;
+  margin: 0 0 0.5rem;
+}
+
+/* Headings receive programmatic focus on screen change; no outline needed there. */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.small {
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.tag {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border: 1px dashed #555;
+  background: #f2f2f2;
+  font-size: 0.9rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Buttons: one plain style for every button so no choice is emphasized. */
+button {
+  font: inherit;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 2px solid #333;
+  border-radius: 0;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #eee;
+}
+
+button:disabled {
+  border-color: #999;
+  color: #777;
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+/* Receipt */
+.receipt {
+  max-width: 22rem;
+  padding: 1rem;
+  border: 2px solid #333;
+}
+
+.receipt table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.receipt th,
+.receipt td {
+  padding: 0.2rem 0;
+  text-align: left;
+}
+
+.receipt thead th {
+  border-bottom: 1px solid #333;
+}
+
+.receipt tfoot th,
+.receipt tfoot td {
+  border-top: 1px solid #333;
+}
+
+.num {
+  text-align: right !important;
+}
+
+.qr-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.qr-text {
+  flex: 1 1 14rem;
+}
+
+.qr-text p {
+  margin-top: 0.5rem;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: 2px solid #333;
+  background: #bbb;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.qr {
+  width: 8rem;
+  height: 8rem;
+  flex: 0 0 auto;
+}
+
+/* Tip options: equal size, equal style */
+fieldset {
+  margin: 0;
+  padding: 0.75rem;
+  border: 2px solid #333;
+}
+
+legend {
+  padding: 0 0.25rem;
+  font-weight: bold;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 3.5rem;
+  padding: 0.5rem;
+  border: 2px solid #333;
+  background: #fff;
+  cursor: pointer;
+}
+
+.option:has(input:checked) {
+  background: #ddd;
+  border-width: 3px;
+}
+
+.option:has(input:focus-visible) {
+  outline: 3px solid #000;
+  outline-offset: 2px;
+}
+
+.option input {
+  margin: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.custom-wrap {
+  margin-top: 1rem;
+}
+
+.custom-wrap label,
+#feedback-form label {
+  display: block;
+  font-weight: bold;
+  margin-top: 0.75rem;
+}
+
+.dollar-field {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+input[type="text"],
+textarea {
+  font: inherit;
+  padding: 0.5rem;
+  border: 2px solid #333;
+  border-radius: 0;
+  background: #fff;
+  color: #111;
+}
+
+input[type="text"] {
+  width: 10rem;
+  max-width: 100%;
+}
+
+textarea {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+[aria-invalid="true"] {
+  border-style: dashed;
+  border-width: 3px;
+}
+
+.error {
+  margin: 0.5rem 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 4px solid #000;
+  background: #eee;
+  font-weight: bold;
+}
+
+.confirm:not(:empty) {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #333;
+  background: #f2f2f2;
+}
+
+/* Distribution diagram and employee shares */
+blockquote {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid #333;
+  background: #f2f2f2;
+}
+
+.diagram {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 2px solid #333;
+  text-align: center;
+}
+
+.diagram-step {
+  margin: 0.5rem 0;
+}
+
+.box {
+  padding: 0.75rem 0.5rem;
+  border: 2px solid #333;
+  background: #e6e6e6;
+  text-align: center;
+}
+
+.box-dashed {
+  margin-top: 1rem;
+  border-style: dashed;
+  background: #fff;
+}
+
+.shares {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+/* Summary lists (review and employee screens) */
+.summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  margin: 1rem 0;
+  border: 2px solid #333;
+}
+
+.summary dt,
+.summary dd {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #999;
+}
+
+.summary dd {
+  text-align: right;
+  font-weight: bold;
+}
+
+.summary dt:last-of-type,
+.summary dd:last-of-type {
+  border-bottom: none;
+}
+
+.panel {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 2px solid #333;
+}
+
+/* Narrow phone screens */
+@media (max-width: 560px) {
+  h1 {
+    font-size: 1.35rem;
+  }
+
+  .options {
+    grid-template-columns: 1fr;
+  }
+
+  .shares {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .button-row button {
+    width: 100%;
+  }
+
+  .receipt {
+    max-width: none;
+  }
+}
