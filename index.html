@@ -52,13 +52,17 @@
         <p class="small">Payment status: Paid (simulated)</p>
       </div>
 
-      <div class="qr-row">
-        <div class="placeholder qr" role="img" aria-label="QR code placeholder — not scannable">
-          QR code placeholder — not scannable
-        </div>
-        <div class="qr-text">
-          <button type="button" data-action="open-tip">Open optional tip page</button>
-          <p>In a real product, scanning the receipt would open this page on your phone.</p>
+      <div class="panel" role="group" aria-labelledby="tip-later-heading">
+        <h2 id="tip-later-heading">Optional: leave a tip later</h2>
+        <p>Your purchase is complete. If you want to tip after your visit, scan the code on your receipt.</p>
+        <div class="qr-row">
+          <div class="placeholder qr" role="img" aria-label="QR code placeholder — not scannable">
+            QR code placeholder — not scannable
+          </div>
+          <div class="qr-text">
+            <p class="tag">Demo: use the button below instead of scanning.</p>
+            <button type="button" data-action="open-tip">Try optional tipping</button>
+          </div>
         </div>
       </div>
 
@@ -97,9 +101,9 @@
         </div>
 
         <p id="tip-error" class="error" role="alert" hidden></p>
-        <p class="small">Selecting an option does not send a tip. You will review it first.</p>
+        <p id="tip-summary" class="selection-summary" aria-live="polite">No option selected yet.</p>
         <div class="button-row">
-          <button type="submit">Continue</button>
+          <button type="submit" id="tip-submit">Choose an option to continue</button>
         </div>
       </form>
 
@@ -119,19 +123,24 @@
         among four employees who worked this shift. The business keeps none.
       </blockquote>
 
-      <div class="diagram" role="img"
+      <div class="diagram" role="group"
            aria-label="Diagram: all tips go into one employee pool, which is divided into four equal shares, one per employee. The business share is none.">
-        <div class="box">Employee tip pool<br>(all tips)</div>
-        <p class="diagram-step" aria-hidden="true">↓ divided equally ↓</p>
+        <p id="dist-preview-label" class="tag">Example: a $2 tip gives each of four employees $0.50.</p>
+        <div class="box">Employee tip pool<br>(all tips)<br><span id="dist-pool-amount">Example tip: $2.00</span></div>
+        <p class="diagram-step" aria-hidden="true">then divided equally into four shares:</p>
         <div class="shares">
-          <div class="box">Employee 1<br>1/4 share</div>
-          <div class="box">Employee 2<br>1/4 share</div>
-          <div class="box">Employee 3<br>1/4 share</div>
-          <div class="box">Employee 4<br>1/4 share</div>
+          <div class="box">Employee 1<br>1/4 share<br><span class="dist-share">$0.50 (example)</span></div>
+          <div class="box">Employee 2<br>1/4 share<br><span class="dist-share">$0.50 (example)</span></div>
+          <div class="box">Employee 3<br>1/4 share<br><span class="dist-share">$0.50 (example)</span></div>
+          <div class="box">Employee 4<br>1/4 share<br><span class="dist-share">$0.50 (example)</span></div>
         </div>
         <div class="box box-dashed">Business share: none</div>
       </div>
 
+      <p id="dist-rounding" class="small" hidden>
+        Shares can differ by one cent because of rounding. Leftover cents go to Employee 1 first,
+        then Employee 2, and so on, so the four shares add up exactly to the tip.
+      </p>
       <p>This is a sample policy written for this prototype. It is not a claim about how any real business handles tips.</p>
       <div class="button-row">
         <button type="button" data-action="return-to-tip">Return to tip page</button>
@@ -164,7 +173,12 @@
     <section id="screen-complete" class="screen" aria-labelledby="complete-heading" hidden>
       <h1 id="complete-heading" tabindex="-1">Visit complete</h1>
       <p id="complete-summary">Your purchase is complete. No tip was added.</p>
-      <p>You can leave now. Feedback below is optional.</p>
+      <div id="fb-skip">
+        <p>You can finish now. Feedback below is optional.</p>
+        <div class="button-row">
+          <button type="button" data-action="go-final">Finish without feedback</button>
+        </div>
+      </div>
 
       <form id="feedback-form" class="panel" novalidate aria-labelledby="fb-heading">
         <h2 id="fb-heading">Optional feedback</h2>
@@ -181,9 +195,24 @@
         <div class="button-row">
           <button type="submit">Submit feedback (simulated)</button>
         </div>
-        <p id="fb-confirm" class="confirm" role="status"></p>
       </form>
 
+      <div id="fb-done" class="panel" hidden>
+        <p id="fb-confirm" class="confirm" role="status" tabindex="-1"></p>
+        <div class="button-row">
+          <button type="button" data-action="go-final">Finish</button>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button type="button" data-action="go-start">Return to prototype start</button>
+      </div>
+    </section>
+
+    <!-- Final screen -->
+    <section id="screen-final" class="screen" aria-labelledby="final-heading" hidden>
+      <h1 id="final-heading" tabindex="-1">All done.</h1>
+      <p>You can close this page.</p>
       <div class="button-row">
         <button type="button" data-action="go-start">Return to prototype start</button>
       </div>
@@ -196,22 +225,30 @@
       <p>No login. This view shows aggregate totals for one sample shift.</p>
 
       <dl class="summary">
-        <dt>Pooled tips this shift (fictional)</dt>
+        <dt>Starting sample pool:</dt>
+        <dd id="emp-start">$40.00</dd>
+        <dt>Simulated tips added during this demo:</dt>
+        <dd id="emp-added">$0.00</dd>
+        <dt>Current sample pool:</dt>
         <dd id="emp-pool">$40.00</dd>
         <dt>Employees sharing the pool</dt>
         <dd>4</dd>
-        <dt>Equal share per employee (fictional)</dt>
+        <dt id="emp-share-label">Equal share per employee (fictional)</dt>
         <dd id="emp-share">$10.00</dd>
       </dl>
 
-      <div class="shares" role="group" aria-label="Equal shares per employee">
+      <div class="shares" role="group" aria-label="Fictional share for each employee">
         <div class="box">Employee 1<br><span class="emp-box-share">$10.00</span></div>
         <div class="box">Employee 2<br><span class="emp-box-share">$10.00</span></div>
         <div class="box">Employee 3<br><span class="emp-box-share">$10.00</span></div>
         <div class="box">Employee 4<br><span class="emp-box-share">$10.00</span></div>
       </div>
 
-      <p>The pool starts at $40.00 of fictional tips. Simulated tips confirmed in the customer experience are added until the page is refreshed. Shares are rounded to the nearest cent for display.</p>
+      <p id="emp-rounding" class="small" hidden>
+        Rounding may create a one-cent difference. Leftover cents go to Employee 1 first,
+        then Employee 2, and so on, so the four shares add up exactly to the current sample pool.
+      </p>
+      <p>The starting sample pool is $40.00 of fictional tips. Each simulated tip confirmed in the customer experience updates these demonstration totals. Refreshing the page resets them to the starting sample pool.</p>
       <p>Aggregate totals illustrate the concept only. They do not guarantee customer anonymity.</p>
       <p>This demo does not claim that tips replace wages or guarantee higher earnings.</p>
 

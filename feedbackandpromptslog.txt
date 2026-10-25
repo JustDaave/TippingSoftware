@@ -1,0 +1,192 @@
+Build prompt: Build a functional, low-fidelity front-end prototype for my HCI class assignment.
+
+PROJECT: QuietTip
+A private, optional digital tip jar that customers access from a receipt after checkout. The design should balance customer comfort with transparent employee tipping.
+
+TECHNICAL REQUIREMENTS
+- Use only HTML, CSS, and vanilla JavaScript.
+- Create index.html, styles.css, and script.js.
+- It must work by opening index.html directly in a browser.
+- Use grayscale, generic Arial/system fonts, simple borders, and clearly labeled placeholder images.
+- No polished branding, colorful elements, animations, or decorative imagery.
+- Make the layout usable on desktop and narrow phone screens.
+- Front end only: no backend, database, API, login, authentication, analytics, or external services.
+- Store temporary state only in JavaScript memory. Do not use localStorage, sessionStorage, IndexedDB, or cookies.
+- Refreshing must reset all selections, feedback, and simulated transactions.
+- Use one HTML file with JavaScript-controlled screens so refresh reliably returns to the beginning.
+- Every visible button must work or be explicitly labeled as a placeholder.
+- Use accessible labels, keyboard controls, visible focus states, and clear validation messages.
+- Do not request real payment or personal information.
+
+CONCEPT
+The customer has already paid for a $20 order at a fictional counter-service café. Tipping is separate from checkout. No tip is selected by default. Choosing not to tip must be as easy and visually neutral as choosing to tip.
+
+BUILD THESE SCREENS
+
+1. Prototype start
+- Explain briefly that this is a demonstration with no real payments.
+- Buttons: "Customer experience" and "Employee transparency demo."
+- These are prototype navigation choices, not login roles.
+
+2. Completed purchase and receipt
+- Heading: "Purchase complete."
+- Show a sample café receipt with an order total of $20.
+- Include a grayscale square labeled "QR code placeholder — not scannable."
+- Beside it, provide a working button: "Open optional tip page."
+- Explain: "In a real product, scanning the receipt would open this page on your phone."
+- Include a working "Finish" button.
+- Opening the tipping page must never be required to finish.
+
+3. Optional tip page
+- Show the café name and purchase amount.
+- Explain: "Tipping is optional. Your purchase is already complete."
+- Show equal-size, equal-style options: "No tip," "$1," "$2," "$3," and "Custom."
+- Start with nothing selected.
+- Custom reveals a labeled dollar-amount field.
+- Do not use default percentages, emotional messages, rankings, tip counts, or suggested social norms.
+- Include "Where tips go," "Leave feedback without tipping," and "Finish without tipping."
+- Selecting an amount does not submit a tip. Continue to a review screen.
+- Reject empty, negative, and nonnumeric custom amounts with an inline explanation.
+
+4. Tip distribution
+- Show this explicitly fictional policy:
+  "All tips go to the employee pool. For this demonstration, pooled tips are divided equally among four employees who worked this shift. The business keeps none."
+- Show a simple grayscale diagram or four equal boxes.
+- Explain that this is a sample policy, not a claim about real businesses.
+- Provide a working return button that preserves the customer's current selection.
+
+5. Review tip
+- Show purchase amount, chosen tip, and combined total, with the tip clearly identified as a separate simulated payment.
+- Buttons: "Edit amount," "Confirm simulated tip," and "Cancel tip."
+- State: "Demo only. No money will be charged."
+- Do not collect card details or imitate a real Apple Pay/Venmo integration.
+- Prevent repeated confirmation from counting the same tip twice.
+
+6. Completion
+- Use neutral language whether the customer tipped or skipped.
+- Offer optional written feedback independently of tipping.
+- Label it: "Do not include personal information. Demo feedback is kept only until refresh."
+- Feedback fields must accept text and show a simulated submission confirmation.
+- Include "Return to prototype start."
+
+7. Employee transparency demo
+- No login.
+- Clearly label all figures as fictional demonstration data.
+- Initially show $40 in pooled tips, four employees, and $10 per employee.
+- Add confirmed simulated tips to that pool and update equal shares.
+- Show aggregate totals only. Do not display customer names, order IDs, individual tip amounts, or a live transaction list.
+- Explain that aggregate totals illustrate the concept and do not guarantee anonymity.
+- Do not claim tips replace wages or guarantee higher earnings.
+- Include a return button.
+
+HCI OBJECTIVES
+- Customer control: checkout is complete before tipping.
+- Reduced pressure: no forced tip screen or preselected amount.
+- Transparency: customers and employees can understand the sample distribution.
+- Error prevention: review before confirming.
+- Easy exit: customers can finish without tipping or giving feedback.
+
+Also create a short README.txt with:
+- How to open the prototype.
+- A screen list.
+- A statement that all transactions and employee data are simulated.
+- A statement that everything resets on refresh.
+
+After implementation, check navigation, custom input validation, canceling, feedback submission, tip-pool updates, and refresh reset. Report what you actually verified and anything I need to test manually. Do not add features beyond this assignment.
+
+
+Feedback follow up prompts
+
+1: Update the existing QuietTip prototype rather than rebuilding it.
+
+User feedback: “I saw the QR code, but I wasn’t immediately sure why I would scan it or whether I had to do anything else.”
+
+On the receipt screen:
+- Add the heading “Optional: leave a tip later” above the existing QR section.
+- Replace the explanation with: “Your purchase is complete. If you want to tip after your visit, scan the code on your receipt.”
+- Keep a separate prototype instruction: “Demo: use the button below instead of scanning.”
+- Rename “Open optional tip page” to “Try optional tipping.”
+- Keep the QR placeholder clearly labeled as not scannable.
+- Keep “Finish” visible and independent of tipping.
+- Ensure the section wraps or stacks without horizontal overflow on phone screens.
+
+Preserve the grayscale, low-fidelity appearance and all existing functionality. Keep everything front-end only with state in JavaScript memory and reset on refresh.
+
+Check the receipt layout at desktop and phone widths and verify both navigation paths. Summarize the changes and what you actually checked.
+
+2: Update the existing QuietTip prototype rather than rebuilding it.
+
+User feedback: “The Continue button was vague. I wasn’t sure whether it would submit a tip or take me somewhere else, especially after selecting No tip.”
+
+On the optional tip screen:
+- When nothing is selected, label the submit button “Choose an option to continue.” Keep it enabled so activating it shows the existing helpful validation.
+- When a positive preset or Custom is selected, label it “Review tip.”
+- When No tip is selected, label it “Finish without tipping.”
+- Show a short selection summary above the button.
+- For a valid positive amount, show “Selected tip: $X.XX. Nothing has been submitted.”
+- For No tip, show “No tip selected. Your purchase is already complete.”
+- For an empty or invalid custom amount, ask the customer to enter a valid amount without displaying an incorrect dollar total.
+- Keep the separate “Finish without tipping” exit available.
+- Preserve equal sizing and styling of all five tip options.
+
+Keep the existing review and confirmation flow. Do not submit anything when a radio option is selected.
+
+Keep everything grayscale, front-end only, and reset on refresh. Check no selection, No tip, presets, and valid and invalid custom amounts. Summarize what changed.
+
+3: Update the existing QuietTip prototype rather than rebuilding it.
+
+User feedback: “The one-quarter shares made sense, but seeing actual dollar amounts would make the distribution easier to understand.”
+
+Improve the existing “Where tips go” screen:
+- Keep the fictional policy and four-employee diagram.
+- If the customer has selected a valid positive tip, show how that amount would be divided among the four employees.
+- If there is no valid positive selection, show a clearly labeled example: “Example: a $2 tip gives each of four employees $0.50.”
+- Label any calculated amounts as a preview, not a submitted tip.
+- Preserve the selected option and custom input when returning to the tip screen.
+- Keep “Business share: none” and the sample-policy explanation.
+
+For amounts that do not divide evenly into cents, distribute leftover cents deterministically among the four example shares so the displayed shares add up exactly to the tip. Explain briefly that shares can differ by one cent because of rounding.
+
+Do not change the employee dashboard in this step.
+
+Keep everything grayscale and front-end only with reset on refresh. Check $2, a custom $1.01 amount, and returning without losing the selection. Summarize the changes.
+
+4: Update the existing QuietTip prototype rather than rebuilding it.
+
+User feedback: “It said feedback was optional, but I only saw Submit feedback and Return to prototype start. I wanted a clear button to finish.”
+
+Improve the completion screen:
+- Add a “Finish without feedback” button before the feedback form.
+- Make that button open a simple final screen saying “All done. You can close this page.”
+- Include “Return to prototype start” on that final screen.
+- After successful simulated feedback submission, hide the form and show the existing submission confirmation with a “Finish” button leading to the same final screen.
+- Keep the feedback form available after tipping, skipping, or canceling a tip.
+- Preserve the direct “Leave feedback without tipping” path and its focus behavior.
+- Do not require feedback or personal information.
+- Starting a new customer experience should show a fresh feedback form.
+
+Use neutral completion language regardless of whether the customer tipped.
+
+Keep everything grayscale, front-end only, and stored only in JavaScript memory. Check skipping feedback, submitting feedback, and starting another customer experience. Summarize what changed.
+
+5: Update the existing QuietTip prototype rather than rebuilding it.
+
+User feedback: “I couldn’t easily tell which money was already in the example pool and which money came from testing the tipping flow.”
+
+Improve the employee transparency demo:
+- Show “Starting sample pool: $40.00.”
+- Show “Simulated tips added during this demo: $X.XX.”
+- Show “Current sample pool: $X.XX.”
+- Keep all figures clearly labeled as fictional.
+- Explain that confirmed tips update these demonstration totals and refreshing resets them.
+- Keep this an aggregate demonstration: do not add individual transactions, customer information, timestamps, or order identifiers.
+- Preserve the explanation that aggregate totals do not guarantee anonymity.
+
+Fix the existing share-rounding behavior:
+- Calculate the four employee allocations in whole cents.
+- Divide the pool as evenly as possible and assign leftover cents in a consistent order.
+- Ensure the four displayed allocations add up exactly to the pool.
+- If allocations differ, replace “Equal share per employee” with “Shares divided as evenly as possible.”
+- Explain that rounding may create a one-cent difference.
+
+Keep everything grayscale and front-end only. Check the initial $40 pool, adding a $2 tip, adding a $1.01 tip, and refreshing. Summarize what changed and what you actually verified.

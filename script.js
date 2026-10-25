@@ -35,6 +35,7 @@
     screen.hidden = false;
 
     if (name === 'tip') renderTip();
+    if (name === 'distribution') renderDistribution();
     if (name === 'review') renderReview();
     if (name === 'complete') renderComplete();
     if (name === 'employee') renderEmployee();
@@ -53,6 +54,68 @@
     }
     $('custom-amount').value = state.customText;
     $('custom-wrap').hidden = state.selection !== 'custom';
+    renderTipSummary();
+  }
+
+  // Updates the selection summary and submit label. Never submits anything.
+  function renderTipSummary() {
+    var label = 'Review tip';
+    var summary;
+    var cents = selectedTipCents();
+    if (state.selection === null) {
+      label = 'Choose an option to continue';
+      summary = 'No option selected yet.';
+    } else if (state.selection === 'none') {
+      label = 'Finish without tipping';
+      summary = 'No tip selected. Your purchase is already complete.';
+    } else if (cents === null) {
+      summary = 'Enter a valid custom amount to review your tip.';
+    } else {
+      summary = 'Selected tip: ' + formatCents(cents) + '. Nothing has been submitted.';
+    }
+    $('tip-submit').textContent = label;
+    $('tip-summary').textContent = summary;
+  }
+
+  // Returns the currently selected positive tip in cents, or null if there is none.
+  function selectedTipCents() {
+    if (state.selection === 'custom') {
+      var result = parseCustomAmount(state.customText);
+      return result.error ? null : result.cents;
+    }
+    if (state.selection === null || state.selection === 'none') return null;
+    return parseInt(state.selection, 10) * 100;
+  }
+
+  // ---------- Tip distribution ----------
+
+  // Splits cents into equal shares; leftover cents go to the first shares in order.
+  function splitCents(cents, count) {
+    var base = Math.floor(cents / count);
+    var leftover = cents % count;
+    var shares = [];
+    for (var i = 0; i < count; i++) {
+      shares.push(base + (i < leftover ? 1 : 0));
+    }
+    return shares;
+  }
+
+  function renderDistribution() {
+    var cents = selectedTipCents();
+    var isPreview = cents !== null;
+    if (!isPreview) cents = 200;
+    var shares = splitCents(cents, EMPLOYEE_COUNT);
+    var suffix = isPreview ? ' (preview)' : ' (example)';
+
+    $('dist-preview-label').textContent = isPreview
+      ? 'Preview of your selected tip. Nothing has been submitted.'
+      : 'Example: a $2 tip gives each of four employees $0.50.';
+    $('dist-pool-amount').textContent = (isPreview ? 'Your selected tip (preview): ' : 'Example tip: ') + formatCents(cents);
+    var boxes = document.querySelectorAll('.dist-share');
+    for (var i = 0; i < boxes.length; i++) {
+      boxes[i].textContent = formatCents(shares[i]) + suffix;
+    }
+    $('dist-rounding').hidden = cents % EMPLOYEE_COUNT === 0;
   }
 
   function setError(el, message) {
@@ -162,6 +225,9 @@
     $('fb-improve').value = '';
     setError($('fb-error'), '');
     $('fb-confirm').textContent = '';
+    $('fb-skip').hidden = false;
+    $('feedback-form').hidden = false;
+    $('fb-done').hidden = true;
   }
 
   function onFeedbackSubmit(event) {
@@ -180,20 +246,34 @@
     state.feedback.push({ worked: worked, improve: improve });
     $('fb-worked').value = '';
     $('fb-improve').value = '';
+    $('fb-skip').hidden = true;
+    $('feedback-form').hidden = true;
+    $('fb-done').hidden = false;
     $('fb-confirm').textContent = 'Feedback submitted (simulated). It was not sent anywhere and is kept only until refresh.';
+    $('fb-confirm').focus();
   }
 
   // ---------- Employee demo ----------
 
   function renderEmployee() {
     var pool = BASE_POOL_CENTS + state.confirmedTipCents;
-    var share = formatCents(pool / EMPLOYEE_COUNT);
+    var shares = splitCents(pool, EMPLOYEE_COUNT);
+    var isEven = pool % EMPLOYEE_COUNT === 0;
+    $('emp-start').textContent = formatCents(BASE_POOL_CENTS);
+    $('emp-added').textContent = formatCents(state.confirmedTipCents);
     $('emp-pool').textContent = formatCents(pool);
-    $('emp-share').textContent = share;
+    $('emp-share-label').textContent = isEven
+      ? 'Equal share per employee (fictional)'
+      : 'Shares divided as evenly as possible (fictional)';
+    // splitCents puts the larger shares first.
+    $('emp-share').textContent = isEven
+      ? formatCents(shares[0])
+      : formatCents(shares[EMPLOYEE_COUNT - 1]) + ' to ' + formatCents(shares[0]);
     var boxes = document.querySelectorAll('.emp-box-share');
     for (var i = 0; i < boxes.length; i++) {
-      boxes[i].textContent = share;
+      boxes[i].textContent = formatCents(shares[i]);
     }
+    $('emp-rounding').hidden = isEven;
   }
 
   // ---------- Wiring ----------
@@ -206,6 +286,7 @@
     },
     'go-employee': function () { showScreen('employee'); },
     'go-start': function () { showScreen('start'); },
+    'go-final': function () { showScreen('final'); },
     'open-tip': function () { showScreen('tip'); },
     'finish-from-receipt': function () {
       finishWithoutTip('Your purchase is complete.');
@@ -236,12 +317,14 @@
     state.selection = event.target.value;
     clearTipErrors();
     $('custom-wrap').hidden = state.selection !== 'custom';
+    renderTipSummary();
   });
 
   $('custom-amount').addEventListener('input', function (event) {
     state.customText = event.target.value;
     setError($('custom-error'), '');
     event.target.removeAttribute('aria-invalid');
+    renderTipSummary();
   });
 
   $('tip-form').addEventListener('submit', onTipSubmit);

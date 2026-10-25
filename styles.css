@@ -135,15 +135,17 @@ button:disabled {
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 1rem;
-  margin: 1.5rem 0;
+  margin-top: 1rem;
 }
 
 .qr-text {
   flex: 1 1 14rem;
+  min-width: 0;
 }
 
-.qr-text p {
-  margin-top: 0.5rem;
+.qr-text .tag {
+  margin: 0 0 0.75rem;
+  overflow-wrap: anywhere;
 }
 
 .placeholder {
@@ -251,6 +253,13 @@ textarea {
 [aria-invalid="true"] {
   border-style: dashed;
   border-width: 3px;
+}
+
+.selection-summary {
+  margin: 1rem 0 0;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #333;
+  background: #f2f2f2;
 }
 
 .error {
