@@ -40,7 +40,8 @@ export async function createTipCheckout(token: string, amountCents: number, base
         metadata: { tip_attempt_id: attempt.id },
         payment_intent_data: { metadata: { tip_attempt_id: attempt.id } },
         success_url: `${baseUrl}/r/${token}/tip-result?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${baseUrl}/r/${token}?tip=canceled`,
+        // The amount only lets the tip page restore the customer's choice. It is never used to charge.
+        cancel_url: `${baseUrl}/r/${token}?tip=canceled&amount=${amountCents}`,
       },
       { idempotencyKey: `tip-attempt-${attempt.id}` },
     );
@@ -78,7 +79,7 @@ export async function syncCheckoutSession(session: Stripe.Checkout.Session): Pro
 
 export type TipResult =
   | { kind: "not_found" }
-  | { kind: "ok"; status: TipStatus; amountCents: number };
+  | { kind: "ok"; status: TipStatus; amountCents: number; cafeName: string };
 
 // Reads a tip attempt for the return page. The session must belong to this receipt.
 // If the webhook has not arrived yet, asks Stripe directly before reporting a status.
@@ -104,5 +105,5 @@ export async function getTipResult(token: string, sessionId: string): Promise<Ti
     await syncCheckoutSession(session);
     row = (await load()) ?? row;
   }
-  return { kind: "ok", status: row.status, amountCents: row.amount_cents };
+  return { kind: "ok", status: row.status, amountCents: row.amount_cents, cafeName: receipt.cafes.name };
 }

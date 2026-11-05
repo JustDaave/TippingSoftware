@@ -28,6 +28,7 @@ Checkout (test mode) · Vercel · GitHub.
 | `/r/<token>/tip-result` | Where Stripe returns the customer; shows the status saved in the database |
 | `/demo/employee` | Aggregate-only, fictional employee transparency demo |
 | `/` | Short project page for evaluators |
+| `/dev/preview`, `/dev/preview/loading-state` | **Development only** (404 in production). Customer interface with a fictional receipt that is not in the database, for checking layout and keyboard use without credentials. Paying and saving feedback call the real API and fail honestly. |
 | `POST /api/tips/checkout` | Creates a pending tip + Stripe Checkout Session |
 | `POST /api/stripe/webhook` | Verified Stripe events mark tips paid / expired / failed |
 | `POST /api/feedback` | Saves optional feedback |
@@ -82,6 +83,9 @@ cp .env.example .env.local
 ```bash
 npm run dev
 ```
+
+Without credentials you can still look at the customer interface at
+<http://localhost:3000/dev/preview> (nothing can be paid or saved there).
 
 Open a link from `npm run receipts:links`. Pay with test card `4242 4242 4242 4242`, any
 future expiry date, any CVC, and any postal code.

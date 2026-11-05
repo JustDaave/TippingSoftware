@@ -19,7 +19,7 @@ export default async function ReceiptTipPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { token } = await params;
-  const { tip } = await searchParams;
+  const { tip, amount } = await searchParams;
   if (!isWellFormedToken(token)) notFound();
 
   let receipt: PublicReceipt | null;
@@ -37,9 +37,18 @@ export default async function ReceiptTipPage({
   }
   if (!receipt) notFound();
 
+  const canceled = tip === "canceled";
+  // Only used to restore the choice after canceling on Stripe; validated again in the browser.
+  const restoreTipCents = canceled && typeof amount === "string" && /^\d{1,5}$/.test(amount) ? Number(amount) : null;
+
   return (
-    <PageShell>
-      <TipExperience key={receipt.token} receipt={receipt} returnedFromCanceledPayment={tip === "canceled"} />
+    <PageShell cafeName={receipt.cafeName}>
+      <TipExperience
+        key={receipt.token}
+        receipt={receipt}
+        returnedFromCanceledPayment={canceled}
+        restoreTipCents={restoreTipCents}
+      />
     </PageShell>
   );
 }

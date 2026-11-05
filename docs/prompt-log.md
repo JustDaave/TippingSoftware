@@ -111,6 +111,194 @@ their own pass and validation when run.
   The print page warns about this.
 - Prompts "2." and "3." from the original log still need to be run and validated.
 
+### HF-2 · 2026-11-04 · High-fidelity customer interface
+
+**Status:** run on 2026-11-04. This is prompt "2." from the original log.
+
+**Prompt (full text):**
+
+```text
+Implement QuietTip's high-fidelity customer interface using the architecture already established.
+
+Visual direction:
+- Calm, professional cafe branding.
+- Warm off-white background, dark readable text, restrained sage or teal accents.
+- Consistent typography, spacing, borders, and subtle interaction feedback.
+- Mobile-first layout, comfortably usable at 360px width and on desktop.
+- Accessible contrast, visible keyboard focus, labeled controls, and touch targets approximately 44px or larger.
+- Respect reduced-motion settings.
+
+The receipt-specific tipping page must show:
+- Cafe name.
+- Receipt reference, purchase date, and original paid amount.
+- "Your purchase is complete. Tipping is optional."
+- Equal-size and equal-style options: No tip, $1, $2, $3, Custom.
+- Nothing selected initially.
+- A labeled custom dollar input.
+- "Where tips go."
+- "Leave feedback without tipping."
+- A clearly visible "Finish without tipping."
+
+Preserve these interaction rules:
+- Selecting an amount never submits a payment.
+- Positive selections lead to "Review tip."
+- No tip leads to finishing without payment.
+- Show a clear selection summary.
+- The review screen distinguishes "Already paid," "Separate tip," and "Total including tip."
+- Allow editing and canceling before payment.
+- Keep completion language neutral for tipping and skipping.
+- Feedback remains optional, with a clear "Finish without feedback."
+- Final screen: "All done. You can close this page."
+
+Show the fictional four-employee pooling policy and a preview of the selected tip's distribution. Use integer cents and distribute leftover cents consistently so shares add up exactly. Preserve the selection when returning.
+
+Build real loading, validation, disabled/submitting, and error-state components. Do not claim data was saved or payment succeeded until the backend confirms it.
+
+Check mobile and desktop layouts and keyboard navigation. Update the prompt log with what changed and what was actually checked.
+```
+
+**Changes**
+- Design system (`app/globals.css`, `components/ui.tsx`):
+  - Warmer off-white background (`#f8f5ef`), sage accents, a serif display face for the cafe
+    name and headings, and a body font based on the system font.
+  - Control borders darkened to `#8f8577` so they reach 3:1 against white. The earlier value
+    measured 2.1:1.
+  - Global base styles moved into `@layer base`. Without that, the global focus ring
+    overrode component styles. Bug found during the browser check: the ring covered the "$"
+    in the custom field and hid its red error border.
+  - New shared parts: cafe header with a leaf mark (`CafeHeader`), `StepHeading`,
+    `Skeleton`, `FieldError`, and `ErrorPanel`. Alerts now have icons. Buttons and tip
+    options shrink slightly when pressed, only when the user has not asked for reduced
+    motion. Steps fade in, and that is also turned off for reduced motion.
+- Tipping page (`components/TipExperience.tsx`):
+  - The heading is now "Your purchase is complete. Tipping is optional."
+  - Receipt card shows cafe, reference, purchase date, amount paid, and a "Paid" badge.
+  - The five options are equal in size and style: stacked under 480px wide, in one row at
+    480px and up. A selected option shows a check badge, which doesn't change its size.
+  - Added the help text "Choosing an amount does not charge you."
+  - "Where tips go", "Leave feedback without tipping", and "Finish without tipping" are
+    full-width buttons under "Other options".
+  - Focus management:
+    - First load: no focus jump.
+    - Clicking "Custom" with a mouse or touch focuses the amount field. Arrow keys keep
+      focus in the radio group.
+    - Returning from "Where tips go" focuses that button again.
+    - "Edit amount" focuses the selected option, or the custom field.
+  - Review screen: the "Separate tip" row is highlighted, and a per-employee split line is
+    added (for example "$0.50 each", or the uneven shares listed). After an error, the
+    button reads "Try again: pay $X tip".
+- Selection kept after canceling on Stripe:
+  - The cancel link now includes the reviewed amount (`?tip=canceled&amount=…`), and the
+    page restores that choice.
+  - The amount is checked again in the browser (`selectionFromCents`, plus 3 new unit
+    tests) and is never used to charge.
+  - A first visit, or `amount` without `tip=canceled`, still starts with nothing selected.
+- Completion and feedback (`components/CompletionFlow.tsx`):
+  - Same neutral wording.
+  - A "Feedback not saved" error now takes focus and says the typed text is kept.
+  - The character counter warns near the limit.
+  - "All done." screen restyled.
+  - "Your feedback was saved" still only appears after a 201 from the server.
+- Loading and error states:
+  - Receipt loading screen uses skeletons that match the page layout, with a text status.
+  - New loading screen for the Stripe return page.
+  - Stripe return page shows the cafe header. "Check tip status again" now refreshes in
+    place with a busy state, and the pending and error wording now says "Do not pay again".
+  - Restyled error, not-found, and "Demo not connected" pages.
+- `/dev/preview` and `/dev/preview/loading-state` added:
+  - Development only: return 404 in a production build.
+  - The fictional receipt they use is not in any database, so paying and saving feedback
+    hit the real API and get its real error.
+- README: routes table and how to open the preview.
+
+**Validation actually performed (2026-11-04, on the development machine)**
+- `npx tsc --noEmit`: no errors.
+- `npx vitest run`: 27 tests passed (24 earlier + 3 for restoring a selection).
+- `npx next build`: succeeded.
+- Production server without credentials (`next start`, checked with `curl`):
+  - `/dev/preview` and `/dev/preview/loading-state` return 404.
+  - `/r/<token>` shows "Demo not connected".
+  - `POST /api/tips/checkout` returns 503 "…Nothing was saved or charged."
+- Browser checks: headless Chrome 156 driven by a Playwright script against `next dev` at
+  `/dev/preview`, at 360×780 and 1280×900. The script lives outside the repo, in a temporary
+  folder. Final run: **134/134 checks passed**.
+  - First run: 132/134. The 2 failures were a mistake in the script itself: it expected a
+    selected option to look identical to the others. The sizes were equal. The check now
+    compares sizes only.
+  - The first run's screenshots showed the focus-ring and wrapping problems listed under
+    Changes. They were fixed before the final run.
+  - Content: cafe name, JL-1042, purchase date, $20.00, the required sentence, and all three
+    exits are present.
+  - Initial state:
+    - Nothing selected.
+    - All five options measured equal size (286×48 on mobile, 92×48 on desktop) with
+      identical colors, border, and font.
+    - All five options stay equal in size after one is selected.
+  - Layout:
+    - No horizontal scrolling at 360px or desktop on the choose, where-tips-go, review,
+      completion, and loading screens.
+    - Every visible control is at least 44px tall and wide on the choose and review
+      screens.
+  - Interaction:
+    - Selecting $2 sent no network request.
+    - Labels and summaries are right for no selection, No tip, $2, and $1.01.
+    - Empty submit shows a message and focuses "No tip".
+    - $0.20 and "abc" are rejected inline, with `aria-invalid`.
+    - Where tips go shows $1.01 as $0.26/$0.25/$0.25/$0.25 with the rounding note.
+      Returning keeps "Custom 1.01" and puts focus back on "Where tips go".
+    - Review shows Already paid $20.00, Separate tip, Total including tip $22.00, and
+      $0.50 each.
+    - "Edit amount" keeps the amount.
+  - Submitting and error states (API responses delayed by about 1 second to observe them):
+    - While paying, the pay button is busy and disabled, and "Edit amount" and
+      "Cancel tip" are disabled.
+    - The real 503 then shows "Payment not started … Nothing was saved or charged." The
+      alert takes focus and the page stays on review.
+    - Feedback: blank submit is rejected. While saving, the button shows "Saving…" and the
+      fields are disabled. The real 503 shows "Feedback not saved", the typed text is kept,
+      and no "saved" message appears.
+  - Completion:
+    - Cancel tip leads to a neutral "Visit complete".
+    - "Finish without feedback" leads to "All done. You can close this page."
+    - "Leave feedback without tipping" focuses the first feedback field.
+  - Returning from Stripe's cancel page:
+    - `?tip=canceled&amount=250` restores Custom $2.50.
+    - `amount=300` restores $3.
+    - `amount` without `tip=canceled` restores nothing.
+  - Keyboard only:
+    - Tab order: skip link, tip options, submit, Where tips go, Leave feedback without
+      tipping, Finish without tipping.
+    - The focused option shows a 3px sage ring.
+    - Tabbing into the options selects nothing. Space and arrow keys select.
+    - Arrowing onto Custom keeps focus in the group, and Tab reaches the amount field.
+    - Enter goes to review. Review focuses its heading, and the next Tab is the pay
+      button.
+    - Edit amount, Finish without tipping, and Finish without feedback all work by
+      keyboard.
+  - Reduced motion: with `prefers-reduced-motion: reduce`, step animations and button
+    transitions compute to 0.01ms.
+- Contrast: calculated with a script from the color values, not measured in a browser. All
+  15 pairs pass. Text is at least 5.8:1; the focus ring and control borders are at least
+  3.3:1.
+- I looked at screenshots of every step at both sizes.
+
+**Not checked**
+- Real screen readers (NVDA, VoiceOver, TalkBack). Only the ARIA structure was checked by
+  script.
+- Real phones, Safari/WebKit, and Firefox. Only Chrome's desktop engine at phone width was
+  used.
+- Anything that needs Supabase or Stripe: a real receipt link, Stripe Checkout, the cancel
+  return with a real session, the confirmed-tip completion, a successful feedback save, and
+  the pending and paid screens on the Stripe return page. Those pages compile and use the
+  same components, but were not seen in a browser.
+- 200% browser zoom and Windows high-contrast mode.
+
+**Unresolved issues / follow-ups**
+- `next dev` writes an `AGENTS.md` file into the project root (a Next.js 16 feature). It is
+  not part of the app. Keep it, delete it, or turn it off with `agentRules: false` in
+  `next.config.ts`.
+- Issues from HF-1 still apply, including the HTTP 200 status for unknown receipt links.
+
 ---
 
 ## Part I – Low-fidelity prototype (original log, verbatim)

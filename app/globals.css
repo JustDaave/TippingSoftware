@@ -1,14 +1,21 @@
 @import "tailwindcss";
 
-/* Calm cafe palette. Text and accent colors meet WCAG AA contrast on the background. */
+/*
+  QuietTip design tokens: calm cafe palette.
+  Measured contrast (WCAG 2.2): ink on paper 13.6:1, muted on paper 6.4:1, sage-700 on paper 7.0:1,
+  white on sage-700 7.7:1, danger on white 6.6:1. Control borders (line-strong) on white 3.6:1,
+  focus ring (sage-600) on paper 5.3:1.
+*/
 @theme {
-  --color-paper: #faf7f2;
+  --color-paper: #f8f5ef;
   --color-surface: #ffffff;
   --color-ink: #1f2a27;
   --color-muted: #4f5c57;
   --color-line: #ddd6cb;
+  --color-line-strong: #8f8577;
   --color-sage-50: #eef4f1;
   --color-sage-100: #dbe8e2;
+  --color-sage-200: #c2d7ce;
   --color-sage-600: #3f6f5e;
   --color-sage-700: #335b4d;
   --color-sage-800: #27473c;
@@ -17,29 +24,60 @@
   --color-warn-50: #fbf5e6;
   --color-warn-700: #7a5a12;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, ui-serif, serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
-html {
-  background: var(--color-paper);
-  color: var(--color-ink);
-  -webkit-text-size-adjust: 100%;
+/* In the base layer so component utilities (for example a field wrapper's own ring) can override it. */
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    line-height: 1.5;
+  }
+
+  /* One consistent, clearly visible keyboard focus ring. */
+  :focus-visible {
+    outline: 3px solid var(--color-sage-600);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Headings receive focus programmatically on step changes; they are not controls. */
+  [tabindex="-1"]:focus {
+    outline: none;
+  }
 }
 
-body {
-  font-family: var(--font-sans);
-  line-height: 1.5;
+@keyframes qt-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-/* One consistent, clearly visible keyboard focus ring. */
-:focus-visible {
-  outline: 3px solid var(--color-sage-600);
-  outline-offset: 2px;
-  border-radius: 6px;
+/* Gentle entrance for each step. Disabled entirely for reduced motion (see below). */
+.qt-step {
+  animation: qt-fade-in 180ms ease-out both;
 }
 
-[tabindex="-1"]:focus {
-  outline: none;
+@keyframes qt-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.qt-skeleton {
+  animation: qt-pulse 1.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

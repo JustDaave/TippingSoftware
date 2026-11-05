@@ -4,6 +4,7 @@ import {
   isValidTipCents,
   parseCustomAmount,
   selectedTipCents,
+  selectionFromCents,
   splitCents,
 } from "./money";
 
@@ -87,5 +88,23 @@ describe("formatCents / isValidTipCents", () => {
     expect(isValidTipCents(2.5)).toBe(false);
     expect(isValidTipCents("200")).toBe(false);
     expect(isValidTipCents(10001)).toBe(false);
+  });
+});
+
+describe("selectionFromCents", () => {
+  it("restores presets", () => {
+    expect(selectionFromCents(200)).toEqual({ selection: "200", customText: "" });
+  });
+  it("restores custom amounts as text that parses back to the same cents", () => {
+    for (const cents of [50, 101, 250, 1005, 10000]) {
+      const restored = selectionFromCents(cents);
+      expect(restored.selection).toBe("custom");
+      expect(selectedTipCents(restored.selection, restored.customText)).toBe(cents);
+    }
+  });
+  it("restores nothing for missing or invalid amounts", () => {
+    for (const cents of [null, 0, 49, 10001, 2.5, NaN]) {
+      expect(selectionFromCents(cents)).toEqual({ selection: null, customText: "" });
+    }
   });
 });

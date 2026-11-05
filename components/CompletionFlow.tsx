@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
-import { Alert, Button, ButtonRow, Card } from "./ui";
+import { Alert, Button, Card, FieldError, StepHeading } from "./ui";
 import { FEEDBACK_MAX_CHARS } from "@/lib/feedback";
 
 type Phase = "complete" | "final";
@@ -31,16 +31,19 @@ export function CompletionFlow({
   const finalRef = useRef<HTMLHeadingElement>(null);
   const workedRef = useRef<HTMLTextAreaElement>(null);
   const confirmRef = useRef<HTMLParagraphElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   const ids = useId();
 
   useEffect(() => {
-    if (phase === "final") finalRef.current?.focus();
+    window.scrollTo({ top: 0 });
+    if (phase === "final") finalRef.current?.focus({ preventScroll: true });
     else if (focusFeedback) workedRef.current?.focus();
-    else headingRef.current?.focus();
+    else headingRef.current?.focus({ preventScroll: true });
   }, [phase, focusFeedback]);
 
   useEffect(() => {
     if (save.kind === "saved") confirmRef.current?.focus();
+    if (save.kind === "error") errorRef.current?.focus();
   }, [save.kind]);
 
   async function onSubmit(e: FormEvent) {
@@ -59,6 +62,7 @@ export function CompletionFlow({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, workedWell: worked, couldImprove: improve }),
       });
+      // Only a 201 from the server means the feedback row was written.
       if (res.status === 201) {
         setSave({ kind: "saved" });
         return;
@@ -73,8 +77,13 @@ export function CompletionFlow({
 
   if (phase === "final") {
     return (
-      <div className="space-y-4 py-10 text-center">
-        <h1 ref={finalRef} tabIndex={-1} className="text-3xl font-semibold">
+      <div className="qt-step flex flex-col items-center gap-4 py-12 text-center">
+        <span aria-hidden="true" className="flex size-14 items-center justify-center rounded-full bg-sage-100 text-sage-800">
+          <svg viewBox="0 0 24 24" className="size-7" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 12.5 4 4 8-9" />
+          </svg>
+        </span>
+        <h1 ref={finalRef} tabIndex={-1} className="font-display text-4xl font-semibold">
           All done.
         </h1>
         <p className="text-lg text-muted">You can close this page.</p>
@@ -85,11 +94,9 @@ export function CompletionFlow({
   const saving = save.kind === "saving";
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-semibold sm:text-3xl">
-          {heading}
-        </h1>
+    <div className="qt-step space-y-6">
+      <div className="space-y-3">
+        <StepHeading headingRef={headingRef}>{heading}</StepHeading>
         <div className="text-lg">{summary}</div>
       </div>
 
@@ -98,30 +105,36 @@ export function CompletionFlow({
       {save.kind !== "saved" && (
         <div className="space-y-3">
           <p>You can finish now. Feedback below is optional.</p>
-          <ButtonRow>
-            <Button variant="primary" onClick={() => setPhase("final")} disabled={saving}>
-              Finish without feedback
-            </Button>
-          </ButtonRow>
+          <Button variant="primary" onClick={() => setPhase("final")} disabled={saving} className="sm:w-full">
+            Finish without feedback
+          </Button>
         </div>
       )}
 
       {save.kind === "saved" ? (
         <Card className="space-y-4">
-          <p ref={confirmRef} tabIndex={-1} role="status" className="font-semibold text-sage-800">
+          <p ref={confirmRef} tabIndex={-1} role="status" className="flex items-center gap-2 font-semibold text-sage-800">
+            <svg aria-hidden="true" viewBox="0 0 20 20" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="10" cy="10" r="8" />
+              <path d="m6.5 10.2 2.3 2.3 4.7-4.9" />
+            </svg>
             Thank you. Your feedback was saved.
           </p>
-          <ButtonRow>
-            <Button variant="primary" onClick={() => setPhase("final")}>
-              Finish
-            </Button>
-          </ButtonRow>
+          <Button variant="primary" onClick={() => setPhase("final")} className="sm:w-full">
+            Finish
+          </Button>
         </Card>
       ) : (
         <Card>
-          <form onSubmit={onSubmit} noValidate aria-labelledby={`${ids}-h`} className="space-y-4">
+          <form
+            onSubmit={onSubmit}
+            noValidate
+            aria-labelledby={`${ids}-h`}
+            aria-busy={saving || undefined}
+            className="space-y-5"
+          >
             <div>
-              <h2 id={`${ids}-h`} className="text-xl font-semibold">
+              <h2 id={`${ids}-h`} className="font-display text-xl font-semibold">
                 Optional feedback
               </h2>
               <p className="mt-1 text-muted">Feedback is separate from tipping.</p>
@@ -134,8 +147,11 @@ export function CompletionFlow({
               id={`${ids}-worked`}
               label="What worked well? (optional)"
               value={worked}
-              onChange={setWorked}
-              describedBy={`${ids}-warn`}
+              onChange={(v) => {
+                setWorked(v);
+                setEmptyError(false);
+              }}
+              describedBy={`${ids}-warn${emptyError ? ` ${ids}-empty` : ""}`}
               disabled={saving}
               invalid={emptyError}
               textareaRef={workedRef}
@@ -144,27 +160,28 @@ export function CompletionFlow({
               id={`${ids}-improve`}
               label="What could be improved? (optional)"
               value={improve}
-              onChange={setImprove}
+              onChange={(v) => {
+                setImprove(v);
+                setEmptyError(false);
+              }}
               describedBy={`${ids}-warn`}
               disabled={saving}
             />
 
             {emptyError && (
-              <Alert tone="error" role="alert">
+              <FieldError id={`${ids}-empty`}>
                 Enter feedback in at least one field, or use “Finish without feedback.”
-              </Alert>
+              </FieldError>
             )}
             {save.kind === "error" && (
-              <Alert tone="error" role="alert" title="Feedback not saved">
-                {save.message}
+              <Alert alertRef={errorRef} tone="error" role="alert" title="Feedback not saved">
+                {save.message} Your text is still here.
               </Alert>
             )}
 
-            <ButtonRow>
-              <Button type="submit" variant="secondary" busy={saving} busyLabel="Saving feedback…">
-                {save.kind === "error" ? "Try saving again" : "Submit feedback"}
-              </Button>
-            </ButtonRow>
+            <Button type="submit" variant="secondary" busy={saving} busyLabel="Saving feedback…" className="sm:w-full">
+              {save.kind === "error" ? "Try saving again" : "Submit feedback"}
+            </Button>
           </form>
         </Card>
       )}
@@ -191,8 +208,9 @@ function FeedbackField({
   invalid?: boolean;
   textareaRef?: React.Ref<HTMLTextAreaElement>;
 }) {
+  const nearLimit = value.length > FEEDBACK_MAX_CHARS * 0.9;
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <label htmlFor={id} className="block font-medium">
         {label}
       </label>
@@ -206,9 +224,12 @@ function FeedbackField({
         aria-invalid={invalid || undefined}
         aria-describedby={`${describedBy} ${id}-count`}
         onChange={(e) => onChange(e.target.value)}
-        className="block w-full rounded-xl border border-line bg-surface px-3 py-2 text-base aria-[invalid=true]:border-danger disabled:opacity-60"
+        className={
+          "block w-full rounded-xl border-2 border-line-strong bg-surface px-3 py-2 text-base transition-colors " +
+          "focus-visible:border-sage-600 aria-[invalid=true]:border-danger disabled:bg-paper disabled:text-muted"
+        }
       />
-      <p id={`${id}-count`} className="text-right text-xs text-muted">
+      <p id={`${id}-count`} className={`text-right text-xs ${nearLimit ? "font-semibold text-warn-700" : "text-muted"}`}>
         {value.length} / {FEEDBACK_MAX_CHARS} characters
       </p>
     </div>

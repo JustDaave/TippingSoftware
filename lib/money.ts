@@ -72,6 +72,16 @@ export function selectedTipCents(selection: TipSelection, customText: string): n
   return Number(selection);
 }
 
+// Restores a selection from a previously reviewed amount (for example after the customer
+// cancels on Stripe's page and comes back). Unknown or invalid amounts restore nothing.
+export function selectionFromCents(cents: number | null): { selection: TipSelection; customText: string } {
+  if (cents === null || !isValidTipCents(cents)) return { selection: null, customText: "" };
+  if ((PRESET_TIPS_CENTS as readonly number[]).includes(cents)) {
+    return { selection: String(cents) as TipSelection, customText: "" };
+  }
+  return { selection: "custom", customText: `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}` };
+}
+
 // Server-side check for amounts arriving from the browser.
 export function isValidTipCents(value: unknown): value is number {
   return (
