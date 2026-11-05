@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* Calm cafe palette. Text and accent colors meet WCAG AA contrast on the background. */
+@theme {
+  --color-paper: #faf7f2;
+  --color-surface: #ffffff;
+  --color-ink: #1f2a27;
+  --color-muted: #4f5c57;
+  --color-line: #ddd6cb;
+  --color-sage-50: #eef4f1;
+  --color-sage-100: #dbe8e2;
+  --color-sage-600: #3f6f5e;
+  --color-sage-700: #335b4d;
+  --color-sage-800: #27473c;
+  --color-danger: #a23b2a;
+  --color-danger-50: #fbefec;
+  --color-warn-50: #fbf5e6;
+  --color-warn-700: #7a5a12;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+html {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+/* One consistent, clearly visible keyboard focus ring. */
+:focus-visible {
+  outline: 3px solid var(--color-sage-600);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff;
+  }
+}

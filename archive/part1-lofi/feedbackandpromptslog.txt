@@ -190,3 +190,38 @@ Fix the existing share-rounding behavior:
 - Explain that rounding may create a one-cent difference.
 
 Keep everything grayscale and front-end only. Check the initial $40 pool, adding a $2 tip, adding a $1.01 tip, and refreshing. Summarize what changed and what you actually verified.
+
+
+11/04/26
+
+1.
+Help me upgrade my existing QuietTip low-fidelity prototype into a high-fidelity functional prototype for an HCI assignment.
+
+First inspect index.html, styles.css, script.js, README.txt, feedbackandpromptslog.txt, and any repository instructions. Preserve the existing files in an archive folder before replacing them.
+
+QuietTip is a private, optional tipping experience accessed AFTER a customer has completed their purchase.
+
+The primary journey is:
+1. Customer completes a purchase at a fictional cafe.
+2. Customer receives a physical printed receipt containing a working QR code.
+3. Customer scans the QR code using their phone's normal camera.
+4. Their browser opens the optional tipping page associated with that specific receipt.
+5. They may tip, finish without tipping, or leave feedback independently.
+
+Do not put a role-selection screen, account registration, or another purchase checkout before the customer tipping page. The original purchase is already paid. A tip is a separate transaction.
+
+Use:
+- Next.js App Router and TypeScript.
+- Tailwind CSS.
+- Supabase Postgres for persistent data.
+- Stripe-hosted Checkout in test mode for the separate tip payment.
+- Vercel for deployment.
+- GitHub for source control.
+
+The cafe, receipts, employee allocation policy, and purchase data are fictional. Payment processing uses Stripe's real API in its test environment. No real funds or employee payouts are involved. A seeded receipt represents an already-paid purchase; we are not building a POS integration.
+
+Carry forward all existing usability improvements, including clear action labels, optional feedback, understandable distribution previews, and accurate cent rounding.
+
+Create docs/prompt-log.md and docs/feedback-log.md. Preserve the existing Part I log and distinguish it from new high-fidelity work. Record prompts, changes, validation actually performed, and unresolved issues throughout development. Never invent user feedback or testing results.
+
+Explain the implementation plan briefly, then start building. If an external account or credential is required, complete independent work and give me exact setup instructions. Do not substitute fake success messages for missing integrations.
