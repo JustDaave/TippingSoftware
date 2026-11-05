@@ -301,6 +301,194 @@ Check mobile and desktop layouts and keyboard navigation. Update the prompt log 
 
 ---
 
+### HF-3 · 2026-11-04 · Real Supabase backend
+
+**Status:** run on 2026-11-04.
+
+**Prompt (full text):**
+
+```text
+Implement the real Supabase backend for QuietTip.
+
+Read the current official documentation before implementing:
+https://supabase.com/docs/guides/getting-started/quickstarts/nextjs
+https://supabase.com/docs/guides/database/postgres/row-level-security
+
+Create versioned SQL migrations and clearly labeled fictional seed data for:
+- Cafe and its sample pooling policy.
+- Receipts representing completed purchases.
+- Tip payment attempts and confirmed statuses.
+- Optional written feedback.
+- Aggregate employee demonstration totals.
+
+Requirements:
+- Each receipt has a cryptographically random, unguessable access token.
+- /r/[token] resolves the specific receipt and opens its tipping experience directly.
+- Treat the receipt URL as a bearer link: anyone holding it can view its limited receipt information.
+- Do not expose customer names, payment details, or unrelated receipts.
+- Use server-side validation and minimal response fields.
+- Enable RLS and prevent anonymous users from listing receipts, reading feedback, changing payment status, or editing aggregate totals.
+- Keep privileged database keys server-side.
+- Validate and rate-limit public write endpoints.
+- Store money in integer cents.
+- Save optional feedback to Supabase and show confirmation only after a successful write.
+- Preserve typed feedback after a failed submission so it can be retried.
+- Keep feedback independent of whether the customer tips.
+- Refreshing must not erase confirmed tips or saved feedback.
+- Starting a new receipt must not reuse another receipt's UI state.
+
+No tip or "Finish without tipping" must never create a payment attempt or permanently prevent a later voluntary tip.
+
+Create a public, clearly labeled employee transparency DEMO that reads only aggregate fictional totals through a restricted server endpoint. Show the starting sample pool separately from confirmed test tips. Do not expose individual receipts, tip transactions, feedback, or employee identities.
+
+Provide .env.example with placeholders and exact Supabase setup instructions. Never put actual secrets in documentation, logs, or Git.
+
+Verify persistence and access restrictions. Report any checks that require my connected Supabase project.
+```
+
+**What already existed (from HF-1) and was kept**
+- Initial migration:
+  - Tables for the cafe, receipts, tip attempts, feedback, and rate limits.
+  - 192-bit random receipt tokens generated with `pgcrypto`.
+  - Money in integer cents, with check constraints.
+  - RLS on every table with no policies, and privileges revoked from `anon` and
+    `authenticated`.
+  - The aggregate `employee_demo_totals` view, with the starting pool kept apart from
+    confirmed test tips.
+- Fictional seed data.
+- The server-only secret-key client.
+- Validated, rate-limited `POST /api/feedback` and `POST /api/tips/checkout`.
+- The aggregate-only demo endpoint and page.
+- `key={token}`, so each receipt gets fresh UI state.
+
+**Changes**
+- Read both Supabase pages first. New migration
+  `supabase/migrations/20261104010000_harden_access.sql`, based on them:
+  - Explicit grants to `service_role`. The docs say some projects don't grant new tables
+    automatically, and then the server could not read its own tables.
+  - `consume_rate_limit` is no longer `SECURITY DEFINER`. The docs warn against those in an
+    exposed schema, and only the server role can call it anyway. It now rejects bad
+    arguments and occasionally deletes stale buckets.
+  - A trigger makes a confirmed (paid) tip final. A tip's receipt, amount, and Stripe
+    session can't change once set.
+  - Default privileges are revoked, so tables and functions added to `public` later are not
+    open to `anon` or `authenticated`.
+  - A partial index for the per-receipt "already tipped?" lookup.
+- Refresh no longer loses saved state:
+  - `/r/[token]` loads `getReceiptState`: the receipt's confirmed tip total and whether
+    feedback exists. It never loads feedback text.
+  - A receipt with a confirmed tip reopens on "Visit complete" with that tip.
+  - Saved feedback shows as saved on the receipt page and on the Stripe return page.
+  - Focus does not jump when a page loads already saved.
+  - "No tip" and "Finish without tipping" still save nothing. A refresh returns to fresh tip
+    choices, so a later tip is still possible.
+- `/dev/preview?saved=tip,feedback` (development only) shows those saved states without
+  credentials.
+- Verification tools:
+  - `supabase/tests/schema.test.ts` (`npm run test:db`) runs both migrations and the seed in
+    PGlite. It first recreates Supabase's roles and its default "grant all to anon"
+    privileges. If the tests pass, the migrations really do remove that access. New dev
+    dependency: `@electric-sql/pglite`.
+  - `scripts/verify-supabase.mjs` (`npm run verify:supabase`) checks the real project.
+    Optional flags: `--write` and `--app <url>`.
+- `.env.example`:
+  - Optional `SUPABASE_PUBLISHABLE_KEY`, used only by the verification script.
+  - Comments say the keys are server-only.
+- README:
+  - Step-by-step Supabase setup: run both migrations in order, seed, check Data API, copy
+    keys, verify.
+  - The new scripts.
+  - Privacy notes, including what a receipt link now reveals: its confirmed tip total and
+    whether feedback exists.
+
+**Validation actually performed (2026-11-04, on the development machine, no Supabase project)**
+- `npx tsc --noEmit`: no errors.
+- `npx next build`: succeeded.
+- `npx vitest run`: 43 passed. That is the 27 existing tests plus 16 new database tests.
+  The database tests ran in PGlite (Postgres 17 in WebAssembly), not Supabase.
+  - `anon` and `authenticated` get "permission denied" when they try to:
+    - read all five tables or the totals view;
+    - insert feedback or receipts;
+    - set a tip to paid;
+    - change the starting pool;
+    - delete receipts;
+    - call either function.
+  - RLS is on for every table with zero policies. Even with `select` deliberately granted
+    to `anon`, it gets 0 rows.
+  - A table created after the migrations is not readable by `anon`.
+  - Seed data:
+    - One fictional cafe with a $40.00 starting pool.
+    - Three fictional receipts with unique 32-character tokens.
+    - Running the seed again adds no duplicates.
+    - A total that doesn't add up is rejected, and so is a non-fictional row.
+  - Tips:
+    - Only paid tips count in the totals view: $2.00 paid plus $3.00 pending shows
+      $2.00.
+    - A paid tip cannot be set to failed, and a tip's amount cannot be edited.
+    - Amounts of 0, 49, 10001, and 1.5 cents are rejected.
+  - Feedback:
+    - Saves on a receipt with no tip.
+    - Blank feedback is rejected.
+  - The rate limit allows 2 calls, then refuses the 3rd.
+- The first PGlite run had 1 failure, caused by a bug in the test helper, not the schema.
+  Inside an aborted transaction, the helper's cleanup threw and hid the real "permission
+  denied" error. I fixed the helper, not the assertion.
+- Browser: headless Chrome, driven by `playwright-core` against `next dev` at
+  `/dev/preview`, at 360×780. The script was in a temporary folder outside the repo.
+  **14/14 checks passed.**
+  - Confirmed tip: the page reopens on "Visit complete", still offers feedback, and shows no
+    tip form.
+  - Confirmed tip plus saved feedback: the saved confirmation shows with no form, and focus
+    stays on the heading.
+  - Saved feedback with no tip: the tip choices are still shown.
+  - Canceling after a confirmed tip shows both notices.
+  - No tip, then finish:
+    - zero API POSTs;
+    - a refresh shows fresh, unselected choices.
+  - Failed feedback save (503, not connected):
+    - the typed text is kept;
+    - no false "saved" message;
+    - no tip request was sent.
+  - Screenshots checked.
+- Production server without credentials (`next start` + `curl`):
+  - The receipt page shows "not connected".
+  - Feedback returns 503 "Nothing was saved".
+  - Blank feedback and a 12.5-cent tip return 400.
+  - The demo endpoint returns 503.
+  - `/dev/preview` returns 404.
+- The built client JavaScript (`.next/static`) contains no Supabase env names, table
+  names, or `service_role`.
+
+**Not checked (needs the connected Supabase project)**
+- That the migrations and seed run in Supabase's SQL Editor. PGlite is close to Supabase's
+  Postgres but is not Supabase.
+- That the real publishable key is blocked through the Data API (PostgREST), and that the
+  secret key works. Run `npm run verify:supabase`.
+- A write and read-back, and the confirmed-tip trigger, on the real database. Run
+  `npm run verify:supabase -- --write`.
+- End to end through the app. Run
+  `npm run verify:supabase -- --write --app http://localhost:3000` with `npm run dev`
+  running. It checks that:
+  - a real receipt link opens only its own receipt;
+  - feedback returns 201 and is still saved after a reload;
+  - the rate limit returns 429;
+  - the demo endpoint returns aggregate fields only;
+  - an unknown token shows the not-found page.
+- A paid Stripe test tip showing on refresh and in the demo totals. This also needs Stripe
+  test keys.
+- The CLI setup route (`supabase link` / `db push`). The SQL Editor route is the main
+  instruction.
+
+**Unresolved issues / follow-ups**
+- The demo page calls the same server-only function as `GET /api/demo/employee-totals`
+  instead of fetching that endpoint over HTTP. Both return only the four aggregate figures.
+- The rate limit is keyed by a hashed IP address, so people on a shared network share one
+  limit.
+- Issues from HF-1 and HF-2 still apply, including HTTP 200 for unknown receipt links. The
+  page content is still "not found".
+
+---
+
 ## Part I – Low-fidelity prototype (original log, verbatim)
 
 The text below is copied unchanged from `feedbackandpromptslog.txt` (lines 1–194, everything

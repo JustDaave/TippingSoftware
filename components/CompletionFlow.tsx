@@ -14,18 +14,21 @@ export function CompletionFlow({
   heading = "Visit complete",
   summary,
   focusFeedback = false,
+  feedbackAlreadySaved = false,
   extra,
 }: {
   token: string;
   heading?: string;
   summary: React.ReactNode;
   focusFeedback?: boolean;
+  /** True when the database already has feedback for this receipt (for example after a refresh). */
+  feedbackAlreadySaved?: boolean;
   extra?: React.ReactNode;
 }) {
   const [phase, setPhase] = useState<Phase>("complete");
   const [worked, setWorked] = useState("");
   const [improve, setImprove] = useState("");
-  const [save, setSave] = useState<SaveState>({ kind: "idle" });
+  const [save, setSave] = useState<SaveState>(feedbackAlreadySaved ? { kind: "saved" } : { kind: "idle" });
   const [emptyError, setEmptyError] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const finalRef = useRef<HTMLHeadingElement>(null);
@@ -41,7 +44,11 @@ export function CompletionFlow({
     else headingRef.current?.focus({ preventScroll: true });
   }, [phase, focusFeedback]);
 
+  // Move focus only when a save finishes now, not when the page loads already saved.
+  const initialSave = useRef(save.kind);
   useEffect(() => {
+    if (save.kind === initialSave.current) return;
+    initialSave.current = save.kind;
     if (save.kind === "saved") confirmRef.current?.focus();
     if (save.kind === "error") errorRef.current?.focus();
   }, [save.kind]);

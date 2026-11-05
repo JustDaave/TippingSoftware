@@ -14,7 +14,7 @@ import {
   splitCents,
   type TipSelection,
 } from "@/lib/money";
-import type { PublicReceipt } from "@/lib/types";
+import type { PublicReceipt, ReceiptState } from "@/lib/types";
 
 // Where keyboard focus goes when the choose step appears.
 type ChooseFocus = "none" | "heading" | "where-tips-go" | "selected-option";
@@ -23,7 +23,9 @@ type Step =
   | { name: "choose"; focus: ChooseFocus }
   | { name: "distribution" }
   | { name: "review"; tipCents: number }
-  | { name: "complete"; outcome: "skipped" | "canceled"; focusFeedback: boolean };
+  | { name: "complete"; outcome: "skipped" | "canceled" | "already-tipped"; focusFeedback: boolean };
+
+const NOTHING_SAVED: ReceiptState = { confirmedTipCents: 0, feedbackSaved: false };
 
 const OPTIONS: { value: Exclude<TipSelection, null>; label: string }[] = [
   { value: "none", label: "No tip" },
@@ -39,15 +41,24 @@ export function TipExperience({
   receipt,
   returnedFromCanceledPayment,
   restoreTipCents = null,
+  saved = NOTHING_SAVED,
 }: {
   receipt: PublicReceipt;
+  /** What the database already has for this receipt, so a refresh keeps it. */
+  saved?: ReceiptState;
   returnedFromCanceledPayment: boolean;
   /** Amount the customer had reviewed before canceling on Stripe's page, if any. */
   restoreTipCents?: number | null;
 }) {
   const restored = selectionFromCents(restoreTipCents);
   // Nothing is selected on a first visit. Only a returning customer gets their own choice back.
-  const [step, setStep] = useState<Step>({ name: "choose", focus: "none" });
+  // A receipt with a confirmed tip reopens on the completion screen. Skipping is never saved,
+  // so a customer who finished without tipping can still come back and tip later.
+  const [step, setStep] = useState<Step>(
+    saved.confirmedTipCents > 0 && !returnedFromCanceledPayment
+      ? { name: "complete", outcome: "already-tipped", focusFeedback: false }
+      : { name: "choose", focus: "none" },
+  );
   const [selection, setSelection] = useState<TipSelection>(restored.selection);
   const [customText, setCustomText] = useState(restored.customText);
 
@@ -56,12 +67,23 @@ export function TipExperience({
       <CompletionFlow
         token={receipt.token}
         summary={
-          <p>
-            {step.outcome === "canceled" ? "The tip was canceled before payment. " : ""}No tip was added. Your purchase
-            is complete.
-          </p>
+          step.outcome === "already-tipped" ? (
+            <p>
+              Your separate {formatCents(saved.confirmedTipCents)} tip for this receipt was confirmed (Stripe test mode,
+              no real money). Your purchase was already complete.
+            </p>
+          ) : (
+            <p>
+              {step.outcome === "canceled" ? "The tip was canceled before payment. " : ""}
+              {saved.confirmedTipCents > 0
+                ? `No additional tip was added. Your earlier ${formatCents(saved.confirmedTipCents)} tip is still confirmed.`
+                : "No tip was added."}{" "}
+              Your purchase is complete.
+            </p>
+          )
         }
         focusFeedback={step.focusFeedback}
+        feedbackAlreadySaved={saved.feedbackSaved}
       />
     );
   }
@@ -96,6 +118,7 @@ export function TipExperience({
       onSelection={setSelection}
       onCustomText={setCustomText}
       notice={returnedFromCanceledPayment}
+      saved={saved}
       onReview={(tipCents) => setStep({ name: "review", tipCents })}
       onDistribution={() => setStep({ name: "distribution" })}
       onFinishWithoutTip={(focusFeedback) => setStep({ name: "complete", outcome: "skipped", focusFeedback })}
@@ -124,6 +147,7 @@ function ChooseStep({
   onSelection,
   onCustomText,
   notice,
+  saved,
   onReview,
   onDistribution,
   onFinishWithoutTip,
@@ -135,6 +159,7 @@ function ChooseStep({
   onSelection: (s: TipSelection) => void;
   onCustomText: (t: string) => void;
   notice: boolean;
+  saved: ReceiptState;
   onReview: (tipCents: number) => void;
   onDistribution: () => void;
   onFinishWithoutTip: (focusFeedback: boolean) => void;
@@ -218,6 +243,13 @@ function ChooseStep({
       </StepHeading>
 
       <ReceiptSummary receipt={receipt} />
+
+      {saved.confirmedTipCents > 0 && (
+        <Alert tone="info" role="status" title="Tip already confirmed">
+          A {formatCents(saved.confirmedTipCents)} tip for this receipt was already confirmed. Another tip is not
+          expected.
+        </Alert>
+      )}
 
       {notice && (
         <Alert tone="info" role="status" title="Tip payment canceled">

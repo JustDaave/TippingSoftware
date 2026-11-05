@@ -9,7 +9,9 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "receipts:links": "node --env-file=.env.local scripts/receipt-links.mjs"
+    "receipts:links": "node --env-file=.env.local scripts/receipt-links.mjs",
+    "verify:supabase": "node --env-file=.env.local scripts/verify-supabase.mjs",
+    "test:db": "vitest run supabase/tests"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",
@@ -21,6 +23,7 @@
     "stripe": "^23.1.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.15",
     "@tailwindcss/postcss": "^4.3.4",
     "@types/node": "^26.6.6",
     "@types/qrcode": "^1.5.6",

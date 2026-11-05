@@ -69,6 +69,7 @@ export default async function TipResultPage({
     <PageShell cafeName={result.cafeName}>
       <CompletionFlow
         token={token}
+        feedbackAlreadySaved={result.feedbackSaved}
         summary={
           paid ? (
             <p>

@@ -26,3 +26,9 @@ export type DemoTotals = {
 };
 
 export type ApiError = { error: string };
+
+// Saved state for one receipt, loaded on every visit so refreshing keeps it.
+export type ReceiptState = {
+  confirmedTipCents: number; // sum of confirmed (paid) tips; 0 when none
+  feedbackSaved: boolean;
+};

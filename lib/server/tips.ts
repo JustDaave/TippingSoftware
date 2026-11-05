@@ -2,7 +2,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { db } from "./supabase";
 import { stripe } from "./stripe";
-import { findReceiptRow } from "./receipts";
+import { findReceiptRow, getReceiptState } from "./receipts";
 import type { TipStatus } from "../types";
 
 // Creates a pending tip attempt and a Stripe-hosted Checkout Session for it.
@@ -79,7 +79,7 @@ export async function syncCheckoutSession(session: Stripe.Checkout.Session): Pro
 
 export type TipResult =
   | { kind: "not_found" }
-  | { kind: "ok"; status: TipStatus; amountCents: number; cafeName: string };
+  | { kind: "ok"; status: TipStatus; amountCents: number; cafeName: string; feedbackSaved: boolean };
 
 // Reads a tip attempt for the return page. The session must belong to this receipt.
 // If the webhook has not arrived yet, asks Stripe directly before reporting a status.
@@ -105,5 +105,6 @@ export async function getTipResult(token: string, sessionId: string): Promise<Ti
     await syncCheckoutSession(session);
     row = (await load()) ?? row;
   }
-  return { kind: "ok", status: row.status, amountCents: row.amount_cents, cafeName: receipt.cafes.name };
+  const { feedbackSaved } = await getReceiptState(receipt.id);
+  return { kind: "ok", status: row.status, amountCents: row.amount_cents, cafeName: receipt.cafes.name, feedbackSaved };
 }

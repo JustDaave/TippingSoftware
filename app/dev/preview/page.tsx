@@ -35,7 +35,10 @@ export default async function DesignPreviewPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   if (process.env.NODE_ENV !== "development") notFound();
-  const { tip, amount } = await searchParams;
+  const { tip, amount, saved } = await searchParams;
+  // ?saved=tip and/or ?saved=feedback (comma-separated) show how a refreshed receipt looks when
+  // the database already has a confirmed $2 tip or saved feedback. Layout check only.
+  const savedParts = typeof saved === "string" ? saved.split(",") : [];
   const canceled = tip === "canceled";
   const restoreTipCents = canceled && typeof amount === "string" && /^\d{1,5}$/.test(amount) ? Number(amount) : null;
 
@@ -46,9 +49,11 @@ export default async function DesignPreviewPage({
       </p>
       <PageShell cafeName={PREVIEW_RECEIPT.cafeName}>
         <TipExperience
+          key={String(saved)}
           receipt={PREVIEW_RECEIPT}
           returnedFromCanceledPayment={canceled}
           restoreTipCents={restoreTipCents}
+          saved={{ confirmedTipCents: savedParts.includes("tip") ? 200 : 0, feedbackSaved: savedParts.includes("feedback") }}
         />
       </PageShell>
     </>

@@ -49,16 +49,36 @@ cp .env.example .env.local
 ### 2. Supabase
 
 1. Go to <https://supabase.com/dashboard> → **New project**. Pick any name/region and save
-   the database password somewhere safe.
-2. Open **SQL Editor** → **New query**. Paste all of
-   `supabase/migrations/20261104000000_initial_schema.sql` and click **Run**.
-3. New query again. Paste all of `supabase/seed.sql` and click **Run**.
-4. Open **Project Settings → Data API** (or click **Connect**) and copy the **Project URL**
-   into `SUPABASE_URL`.
-5. Open **Project Settings → API Keys**. Copy a **secret** key (`sb_secret_…`) into
-   `SUPABASE_SECRET_KEY`. (The legacy `service_role` key also works.) Do **not** use the
-   publishable/anon key, and never put the secret key in a `NEXT_PUBLIC_` variable.
-6. Print your private receipt links (tokens are random per project):
+   the database password in a password manager (not in this repo).
+2. Create the tables. Either:
+   - **Dashboard:** open **SQL Editor** → **New query**, paste all of
+     `supabase/migrations/20261104000000_initial_schema.sql`, click **Run**. Then a new query
+     with all of `supabase/migrations/20261104010000_harden_access.sql`, **Run**. Run them in
+     that order, each once. (If you already ran the first one earlier, run only the second.)
+   - **or CLI** (not tested in this repo): `npx supabase login`, then
+     `npx supabase link --project-ref <your-project-ref>`, then `npx supabase db push`.
+3. Load the fictional seed data: a new SQL Editor query with all of `supabase/seed.sql`,
+   **Run** (safe to run again; it skips rows that exist). With the CLI:
+   `npx supabase db push --include-seed`.
+4. Check that **Integrations → Data API** is enabled (the server talks to the database
+   through it). "Automatically expose new tables" can stay off: the migrations grant the
+   server role what it needs and give public roles nothing.
+5. **Project Settings → Data API** (or **Connect**): copy the **Project URL** into
+   `SUPABASE_URL`.
+6. **Project Settings → API Keys**: copy a **secret** key (`sb_secret_…`) into
+   `SUPABASE_SECRET_KEY`. (The legacy `service_role` key also works.) Never put it in a
+   `NEXT_PUBLIC_` variable, a screenshot, a commit, or a chat.
+   Optionally copy the **publishable** key (`sb_publishable_…`) into
+   `SUPABASE_PUBLISHABLE_KEY`. The app never uses it; only the verification script does.
+7. Verify the project:
+   ```bash
+   npm run verify:supabase              # read-only: public key blocked, seed present
+   npm run verify:supabase -- --write   # also a write/read round trip, then cleanup
+   ```
+   With `npm run dev` running in another terminal, add `--app http://localhost:3000` to
+   also check receipt pages, the demo endpoint, validation, refresh, and rate limiting.
+   (The `--write --app` run trips the feedback rate limit for your computer for 10 minutes.)
+8. Print your private receipt links (tokens are random per project):
    ```bash
    npm run receipts:links
    ```
@@ -115,7 +135,9 @@ network address (for example `http://192.168.1.20:3000`), restart, and open
 |---|---|
 | `npm run dev` | Development server |
 | `npm run build` / `npm start` | Production build / server |
-| `npm test` | Unit tests for cent math and amount parsing |
+| `npm test` | Unit tests (cent math, amount parsing) and offline database tests |
+| `npm run test:db` | Only the database tests: migrations + seed in PGlite, with Supabase's roles |
+| `npm run verify:supabase` | Checks your real Supabase project (see Setup step 2.7) |
 | `npm run typecheck` | TypeScript check |
 | `npm run receipts:links` | Prints private receipt links (treat them like secrets) |
 
@@ -124,7 +146,13 @@ network address (for example `http://192.168.1.20:3000`), restart, and open
 - Receipt links are bearer links: anyone with the link can see that one receipt's limited
   details (cafe, reference, date, items, amounts) and tip. No customer names or card details
   are stored.
+- A receipt link also shows whether that receipt already has a confirmed tip (and its total)
+  and whether feedback was saved, so a refresh doesn't lose them. It never shows feedback
+  text, other receipts, or individual payment records.
 - The browser never talks to Supabase. All reads and writes go through server code with the
-  secret key. RLS is on for every table with no public policies.
+  secret key. RLS is on for every table with no policies, and table privileges are revoked
+  from `anon` and `authenticated`, so the publishable key can read or change nothing.
+- A confirmed tip cannot be changed back or edited, even by the server (database trigger).
+- "No tip" and "Finish without tipping" save nothing, so the customer can still tip later.
 - Public write endpoints validate input and are rate-limited per hashed IP address.
 - Pages send `Referrer-Policy: no-referrer` so receipt tokens are not leaked to other sites.
